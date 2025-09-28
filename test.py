@@ -1,4 +1,4 @@
-a#!/usr/bin/env python3
+#!/usr/bin/env python3
 # ==================== ADGUARD VPN GUI ====================
 # ВЕРСИЯ: 1.6.0 (фиксированная структура интерфейса)
 # БЛОК ИМПОРТОВ
@@ -890,18 +890,18 @@ class AdGuardVPNWindow(Gtk.ApplicationWindow):
         """Выполнение команды подключения"""
         try:
             self.append_auth_log("Выполнение подключения к VPN...")
-            
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                f.write(f"{self.sudo_password}\n")
-                temp_file = f.name
-            
-            cmd = f"cat {temp_file} | sudo -S yes | {ADGUARD_PATH} connect -l {self.current_location}"
-            
+            # Выполняем сам adguardvpn-cli под sudo и передаём пароль через stdin (-S)
+            cmd = [
+                "sudo", "-S",
+                ADGUARD_PATH, "connect", "-l", str(self.current_location)
+            ]
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=30
+                cmd,
+                input=f"{self.sudo_password}\n",
+                capture_output=True,
+                text=True,
+                timeout=60
             )
-            
-            os.unlink(temp_file)
             
             if not self.sudo_password_remembered:
                 self.sudo_password = None
@@ -942,18 +942,18 @@ class AdGuardVPNWindow(Gtk.ApplicationWindow):
         """Выполнение команды отключения"""
         try:
             self.append_auth_log("=== ОТКЛЮЧЕНИЕ VPN ===")
-            
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                f.write(f"{self.sudo_password}\n")
-                temp_file = f.name
-            
-            cmd = f"cat {temp_file} | sudo -S yes | {ADGUARD_PATH} disconnect"
-            
+            # Выполняем команду отключения под sudo, пароль передаём через stdin
+            cmd = [
+                "sudo", "-S",
+                ADGUARD_PATH, "disconnect"
+            ]
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=15
+                cmd,
+                input=f"{self.sudo_password}\n",
+                capture_output=True,
+                text=True,
+                timeout=30
             )
-            
-            os.unlink(temp_file)
             
             if not self.sudo_password_remembered:
                 self.sudo_password = None
