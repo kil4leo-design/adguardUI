@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ==================== ADGUARD VPN GUI ====================
-# ВЕРСИЯ: 1.6.1 (фиксированная структура интерфейса)
+# ВЕРСИЯ: 1.6.2 (фиксированная структура интерфейса)
 # БЛОК ИМПОРТОВ
 import gi
 import sys
@@ -22,7 +22,7 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 
 # ==================== КОНФИГУРАЦИЯ ====================
-VERSION = "1.6.1"
+VERSION = "1.6.2"
 APP_ID = "com.example.AdGuardVPN"
 ADGUARD_PATH = "/opt/adguardvpn_cli/adguardvpn-cli"
 CURRENT_USER = getuser()
@@ -985,12 +985,17 @@ class AdGuardVPNWindow(Gtk.ApplicationWindow):
             result = self.run_command_simple("status")
             
             if result and result.returncode == 0:
-                if "Connected" in result.stdout:
+                out = (result.stdout or "").strip()
+                out_lc = out.lower()
+                # Обновляем текст статуса без принудительной смены состояния на "отключено"
+                if "connected" in out_lc and "disconnected" not in out_lc:
                     GLib.idle_add(lambda: self.stats_label.set_text("Статус: Подключено"))
+                    # Безопасно обновим только если явно подключено, чтобы не провоцировать ложное отключение UI
                     GLib.idle_add(self.set_vpn_status, "connected")
                 else:
-                    GLib.idle_add(lambda: self.stats_label.set_text("Статус: Отключено"))
-                    GLib.idle_add(self.set_vpn_status, "disconnected")
+                    # Показываем фактический вывод, но состояние не трогаем (во избежание нежелательного переключения)
+                    display = "Статус: Отключено" if "disconnected" in out_lc else (out if out else "Статус неизвестен")
+                    GLib.idle_add(lambda: self.stats_label.set_text(display))
             else:
                 GLib.idle_add(lambda: self.stats_label.set_text("Ошибка проверки статуса"))
                 
