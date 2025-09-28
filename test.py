@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ==================== ADGUARD VPN GUI ====================
-# ВЕРСИЯ: 1.6.0 (фиксированная структура интерфейса)
+# ВЕРСИЯ: 1.6.1 (фиксированная структура интерфейса)
 # БЛОК ИМПОРТОВ
 import gi
 import sys
@@ -13,12 +13,16 @@ import select
 import time
 from getpass import getuser
 
+# Принудительно используем Cairo-рендерер для GTK4 в окружениях без GL (headless/VM/SSH)
+if "GSK_RENDERER" not in os.environ:
+    os.environ["GSK_RENDERER"] = "cairo"
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 
 # ==================== КОНФИГУРАЦИЯ ====================
-VERSION = "1.6.0"
+VERSION = "1.6.1"
 APP_ID = "com.example.AdGuardVPN"
 ADGUARD_PATH = "/opt/adguardvpn_cli/adguardvpn-cli"
 CURRENT_USER = getuser()
